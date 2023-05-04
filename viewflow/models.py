@@ -64,12 +64,12 @@ class AbstractProcess(models.Model):
                 Context({'process': self, 'flow_class': self.flow_class})
             )
 
-        return "{} - {}".format(self.flow_class.process_title, self.status)
+        return f"{self.flow_class.process_title} - {self.status}"
 
     def __str__(self):
         if self.flow_class:
-            return '{} #{}'.format(self.flow_class.process_title, self.pk)
-        return "<Process {}> - {}".format(self.pk, self.status)
+            return f'{self.flow_class.process_title} #{self.pk}'
+        return f"<Process {self.pk}> - {self.status}"
 
     class Meta:  # noqa D101
         abstract = True
@@ -118,13 +118,12 @@ class AbstractTask(models.Model):
                         'task': self,
                         'flow_class': self.flow_task.flow_class,
                         'flow_task': self.flow_task}))
-            else:
-                if hasattr(self.flow_task, 'task_description'):
-                    return Template(force_str(self.flow_task.task_description or "")).render(Context({
-                        'process': self.flow_process,
-                        'task': self,
-                        'flow_class': self.flow_task.flow_class,
-                        'flow_task': self.flow_task}))
+            elif hasattr(self.flow_task, 'task_description'):
+                return Template(force_str(self.flow_task.task_description or "")).render(Context({
+                    'process': self.flow_process,
+                    'task': self,
+                    'flow_class': self.flow_task.flow_class,
+                    'flow_task': self.flow_task}))
 
         return ""
 
@@ -145,12 +144,8 @@ class AbstractTask(models.Model):
 
     def __str__(self):
         if self.flow_task:
-            return "<{}.{}/{}> - {}".format(
-                self.flow_task.flow_class._meta.flow_label,
-                self.flow_task,
-                self.pk,
-                self.status)
-        return "<Task {}> - {}".format(self.pk, self.status)
+            return f"<{self.flow_task.flow_class._meta.flow_label}.{self.flow_task}/{self.pk}> - {self.status}"
+        return f"<Task {self.pk}> - {self.status}"
 
     class Meta:  # noqa D101
         abstract = True

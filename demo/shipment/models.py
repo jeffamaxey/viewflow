@@ -24,7 +24,7 @@ class Insurance(models.Model):
     cost = models.IntegerField()
 
     def __str__(self):
-        return '{} ${}'.format(self.company_name, self.cost)
+        return f'{self.company_name} ${self.cost}'
 
 
 class Shipment(models.Model):
@@ -65,10 +65,7 @@ class ShipmentProcess(Process):
 
     def is_normal_post(self):
         try:
-            if self.shipment.carrier:
-                return self.shipment.carrier.is_default()
-            else:
-                return None
+            return self.shipment.carrier.is_default() if self.shipment.carrier else None
         except (Shipment.DoesNotExist, Carrier.DoesNotExist):
             return None
 

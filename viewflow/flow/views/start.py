@@ -35,16 +35,16 @@ class BaseStartFlowMixin(object):
              <app_label>/<flow_label>/task.html,
              'viewflow/flow/task.html']
         """
-        if self.template_name is None:
-            flow_task = self.activation.flow_task
-            opts = self.activation.flow_task.flow_class._meta
-
-            return (
-                '{}/{}/{}.html'.format(opts.app_label, opts.flow_label, flow_task.name),
-                '{}/{}/start.html'.format(opts.app_label, opts.flow_label),
-                'viewflow/flow/start.html')
-        else:
+        if self.template_name is not None:
             return [self.template_name]
+        flow_task = self.activation.flow_task
+        opts = self.activation.flow_task.flow_class._meta
+
+        return (
+            f'{opts.app_label}/{opts.flow_label}/{flow_task.name}.html',
+            f'{opts.app_label}/{opts.flow_label}/start.html',
+            'viewflow/flow/start.html',
+        )
 
     @method_decorator(flow_start_view)
     def dispatch(self, request, **kwargs):
@@ -53,7 +53,7 @@ class BaseStartFlowMixin(object):
         if not self.activation.has_perm(request.user):
             raise PermissionDenied
 
-        user = request.user if not request.user.is_anonymous else None
+        user = None if request.user.is_anonymous else request.user
         self.activation.prepare(request.POST or None, user=user)
         return super(BaseStartFlowMixin, self).dispatch(request, **kwargs)
 

@@ -34,7 +34,9 @@ class ManagedStartViewActivation(StartActivation):
 
         if data:
             if not self.management_form.is_valid():
-                raise FlowRuntimeError('Activation metadata is broken {}'.format(self.management_form.errors))
+                raise FlowRuntimeError(
+                    f'Activation metadata is broken {self.management_form.errors}'
+                )
             self.task = self.management_form.save(commit=False)
 
 
@@ -71,7 +73,9 @@ class ManagedViewActivation(ViewActivation):
 
         if data:
             if not self.management_form.is_valid():
-                raise FlowRuntimeError('Activation metadata is broken {}'.format(self.management_form.errors))
+                raise FlowRuntimeError(
+                    f'Activation metadata is broken {self.management_form.errors}'
+                )
             self.task = self.management_form.save(commit=False)
 
     @classmethod
@@ -81,14 +85,10 @@ class ManagedViewActivation(ViewActivation):
 
         activation = task.activate()
 
-        # Try to assign permission
-        owner_permission = flow_task.calc_owner_permission(activation)
-        if owner_permission:
+        if owner_permission := flow_task.calc_owner_permission(activation):
             task.owner_permission = owner_permission
 
-        # Try to assign owner
-        owner = flow_task.calc_owner(activation)
-        if owner:
+        if owner := flow_task.calc_owner(activation):
             task.owner = owner
             task.assigned = now()
             task.status = STATUS.ASSIGNED

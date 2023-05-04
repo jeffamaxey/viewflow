@@ -17,14 +17,10 @@ class SplitActivation(AbstractGateActivation):
     def calculate_next(self):
         """Calculate nodes list to activate."""
         for node, cond in self.flow_task._branches:
-            if cond:
-                if cond(self):
-                    self.next_tasks.append(node)
-            else:
+            if cond and cond(self) or not cond:
                 self.next_tasks.append(node)
-
         if not self.next_tasks:
-            raise FlowRuntimeError('No next task available for {}'.format(self.flow_task.name))
+            raise FlowRuntimeError(f'No next task available for {self.flow_task.name}')
 
     @Activation.status.super()
     def activate_next(self):

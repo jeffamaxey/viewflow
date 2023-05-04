@@ -40,18 +40,21 @@ class JoinActivation(Activation):
         if not self.flow_task._wait_all:
             return True
 
-        join_prefixes = set(
+        join_prefixes = {
             prev.token.get_common_split_prefix(self.task.token, prev.pk)
-            for prev in self.task.previous.exclude(status=STATUS.CANCELED).all())
+            for prev in self.task.previous.exclude(status=STATUS.CANCELED).all()
+        }
 
         if len(join_prefixes) > 1:
-            raise FlowRuntimeError('Multiple tokens {} came to join {}'.format(join_prefixes, self.flow_task.name))
+            raise FlowRuntimeError(
+                f'Multiple tokens {join_prefixes} came to join {self.flow_task.name}'
+            )
 
         join_token_prefix = next(iter(join_prefixes))
 
         active = self.flow_class.task_class._default_manager \
-            .filter(process=self.process, token__startswith=join_token_prefix) \
-            .exclude(status__in=[STATUS.DONE, STATUS.CANCELED])
+                .filter(process=self.process, token__startswith=join_token_prefix) \
+                .exclude(status__in=[STATUS.DONE, STATUS.CANCELED])
 
         return not active.exists()
 
@@ -108,8 +111,11 @@ class JoinActivation(Activation):
 
         activation = cls()
 
-        task = tasks.first()
-        if not task:
+        if task := tasks.first():
+            task.previous.add(prev_activation.task)
+            activation.initialize(flow_task, task)
+
+        else:
             if token.is_split_token():
                 token = token.get_base_split_token()
 
@@ -123,10 +129,6 @@ class JoinActivation(Activation):
 
             activation.initialize(flow_task, task)
             activation.start()
-        else:
-            task.previous.add(prev_activation.task)
-            activation.initialize(flow_task, task)
-
         if activation.is_done():
             activation.done()
 

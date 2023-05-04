@@ -11,11 +11,11 @@ from .activation import STATUS
 
 
 def _available_flows(flow_classes, user):
-    result = []
-    for flow_class in flow_classes:
-        if flow_class.instance.has_view_permission(user):
-            result.append(flow_class)
-    return result
+    return [
+        flow_class
+        for flow_class in flow_classes
+        if flow_class.instance.has_view_permission(user)
+    ]
 
 
 def _get_related_path(model, base_model):
@@ -49,16 +49,12 @@ def _get_sub_obj(obj, query):
     except ObjectDoesNotExist:
         return None
 
-    if query:
-        return _get_sub_obj(node, query)
-    else:
-        return node
+    return _get_sub_obj(node, query) if query else node
 
 
 def coerce_to_related_instance(instance, target_model):
     """Return subclass of the base object."""
-    related = _get_related_path(target_model, instance.__class__)
-    if related:
+    if related := _get_related_path(target_model, instance.__class__):
         instance = _get_sub_obj(instance, related)
     if instance and not isinstance(instance, target_model):
         # Coerce proxy classes
@@ -69,14 +65,12 @@ def coerce_to_related_instance(instance, target_model):
 class ProcessIterable(ModelIterable):
     def __iter__(self):
         base_iterator = super(ProcessIterable, self).__iter__()
-        if getattr(self.queryset, '_coerced', False):
-            for process in base_iterator:
-                if isinstance(process, self.queryset.model):
-                    process = coerce_to_related_instance(process, process.flow_class.process_class)
-                yield process
-        else:
-            for process in base_iterator:
-                yield process
+        for process in base_iterator:
+            if getattr(self.queryset, '_coerced', False) and isinstance(
+                process, self.queryset.model
+            ):
+                process = coerce_to_related_instance(process, process.flow_class.process_class)
+            yield process
 
 
 class ProcessQuerySet(QuerySet):
@@ -115,7 +109,7 @@ class ProcessQuerySet(QuerySet):
             return super(ProcessQuerySet, self)._clone()
 
         try:
-            kwargs.update({'_coerced': self._coerced})
+            kwargs['_coerced'] = self._coerced
         except AttributeError:
             pass
         return super(ProcessQuerySet, self)._clone(*args, **kwargs)
@@ -124,14 +118,12 @@ class ProcessQuerySet(QuerySet):
 class TaskIterable(ModelIterable):
     def __iter__(self):
         base_iterator = super(TaskIterable, self).__iter__()
-        if getattr(self.queryset, '_coerced', False):
-            for task in base_iterator:
-                if isinstance(task, self.queryset.model):
-                    task = coerce_to_related_instance(task, task.flow_task.flow_class.task_class)
-                yield task
-        else:
-            for task in base_iterator:
-                yield task
+        for task in base_iterator:
+            if getattr(self.queryset, '_coerced', False) and isinstance(
+                task, self.queryset.model
+            ):
+                task = coerce_to_related_instance(task, task.flow_task.flow_class.task_class)
+            yield task
 
 
 class TaskQuerySet(QuerySet):
@@ -209,7 +201,7 @@ class TaskQuerySet(QuerySet):
             return super(TaskQuerySet, self)._clone()
 
         try:
-            kwargs.update({'_coerced': self._coerced})
+            kwargs['_coerced'] = self._coerced
         except AttributeError:
             pass
         return super(TaskQuerySet, self)._clone(*args, **kwargs)

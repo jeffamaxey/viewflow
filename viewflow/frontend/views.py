@@ -81,9 +81,7 @@ class BaseTasksActionView(FlowListMixin, generic.TemplateView):
             task_link = '<a href="{task_url}">#{task_pk}</a>'.format(task_url=task_url, task_pk=task.pk)
             tasks_links.append(task_link)
 
-        kwargs.update({
-            'tasks': ' '.join(tasks_links)
-        })
+        kwargs['tasks'] = ' '.join(tasks_links)
 
         message = mark_safe(_(message).format(**kwargs))
 
@@ -161,7 +159,7 @@ class AllTaskListView(FlowListMixin,
 
     def task_hash(self, task):
         task_url = frontend_url(self.request, self.get_task_url(task), back_link='here')
-        return mark_safe('<a href="{}">{}/{}</a>'.format(task_url, task.process.id, task.pk))
+        return mark_safe(f'<a href="{task_url}">{task.process.id}/{task.pk}</a>')
     task_hash.short_description = _("#")
 
     def description(self, task):
@@ -169,7 +167,7 @@ class AllTaskListView(FlowListMixin,
         if not summary:
             summary = task.flow_task
         task_url = frontend_url(self.request, self.get_task_url(task), back_link='here')
-        return mark_safe('<a href="{}">{}</a>'.format(task_url, summary))
+        return mark_safe(f'<a href="{task_url}">{summary}</a>')
     description.short_description = _('Task Description')
 
     def process_summary(self, task):
@@ -178,15 +176,15 @@ class AllTaskListView(FlowListMixin,
 
     def process_url(self, task):
         process_url = frontend_url(self.request, self.get_process_url(task.process), back_link='here')
-        return mark_safe('<a href="{}">{} #{}</a>'.format(
-            process_url, task.process.flow_class.process_title, task.process.pk))
+        return mark_safe(
+            f'<a href="{process_url}">{task.process.flow_class.process_title} #{task.process.pk}</a>'
+        )
     process_url.short_description = _('Process URL')
 
     def get_queryset(self):
         """Filtered task list."""
         queryset = Task.objects.inbox(self.flows, self.request.user)
-        ordering = self.get_ordering()
-        if ordering:
+        if ordering := self.get_ordering():
             if isinstance(ordering, six.string_types):
                 ordering = (ordering,)
             queryset = queryset.order_by(*ordering)
@@ -208,7 +206,7 @@ class AllQueueListView(
 
     def task_hash(self, task):
         task_url = frontend_url(self.request, self.get_task_url(task), back_link='here')
-        return mark_safe('<a href="{}">{}/{}</a>'.format(task_url, task.process.id, task.pk))
+        return mark_safe(f'<a href="{task_url}">{task.process.id}/{task.pk}</a>')
     task_hash.short_description = _("#")
 
     def description(self, task):
@@ -216,7 +214,7 @@ class AllQueueListView(
         if not summary:
             summary = task.flow_task
         task_url = frontend_url(self.request, self.get_task_url(task), back_link='here')
-        return mark_safe('<a href="{}">{}</a>'.format(task_url, summary))
+        return mark_safe(f'<a href="{task_url}">{summary}</a>')
     description.short_description = _('Task Description')
 
     def process_summary(self, task):
@@ -225,15 +223,15 @@ class AllQueueListView(
 
     def process_url(self, task):
         process_url = frontend_url(self.request, self.get_process_url(task.process), back_link='here')
-        return mark_safe('<a href="{}">{} #{}</a>'.format(
-            process_url, task.process.flow_class.process_title, task.process.pk))
+        return mark_safe(
+            f'<a href="{process_url}">{task.process.flow_class.process_title} #{task.process.pk}</a>'
+        )
     process_url.short_description = _('Process URL')
 
     def get_queryset(self):
         """Filtered task list."""
         queryset = Task.objects.queue(self.flows, self.request.user)
-        ordering = self.get_ordering()
-        if ordering:
+        if ordering := self.get_ordering():
             if isinstance(ordering, six.string_types):
                 ordering = (ordering,)
             queryset = queryset.order_by(*ordering)
@@ -254,7 +252,7 @@ class AllArchiveListView(FlowListMixin,
 
     def task_hash(self, task):
         task_url = frontend_url(self.request, self.get_task_url(task), back_link='here')
-        return mark_safe('<a href="{}">{}/{}</a>'.format(task_url, task.process.id, task.pk))
+        return mark_safe(f'<a href="{task_url}">{task.process.id}/{task.pk}</a>')
     task_hash.short_description = _("#")
 
     def description(self, task):
@@ -262,26 +260,25 @@ class AllArchiveListView(FlowListMixin,
         if not summary:
             summary = task.flow_task
         task_url = frontend_url(self.request, self.get_task_url(task), back_link='here')
-        return mark_safe('<a href="{}">{}</a>'.format(task_url, summary))
+        return mark_safe(f'<a href="{task_url}">{summary}</a>')
     description.short_description = _('Task Description')
 
     def process_title(self, task):
         process_url = frontend_url(self.request, self.get_process_url(task.process), back_link='here')
-        return mark_safe('<a href="{}">{} #{}</a>'.format(
-            process_url, task.flow_task.flow_class.process_title, task.process.pk))
+        return mark_safe(
+            f'<a href="{process_url}">{task.flow_task.flow_class.process_title} #{task.process.pk}</a>'
+        )
     process_title.short_description = _('Process')
 
     def process_summary(self, task):
         process_url = frontend_url(self.request, self.get_process_url(task.process), back_link='here')
-        return mark_safe('<a href="{}">{}</a>'.format(
-            process_url, task.flow_process.summary()))
+        return mark_safe(f'<a href="{process_url}">{task.flow_process.summary()}</a>')
     process_summary.short_description = _('Process Summary')
 
     def get_queryset(self):
         """All tasks from all processes assigned to the current user."""
         queryset = Task.objects.archive(self.flows, self.request.user)
-        ordering = self.get_ordering()
-        if ordering:
+        if ordering := self.get_ordering():
             if isinstance(ordering, six.string_types):
                 ordering = (ordering,)
             queryset = queryset.order_by(*ordering)
@@ -299,28 +296,25 @@ class ProcessListView(FlowViewPermissionMixin,
     ]
 
     def get_process_link(self, process):
-        url_name = '{}:detail'.format(self.request.resolver_match.namespace)
+        url_name = f'{self.request.resolver_match.namespace}:detail'
         return reverse(url_name, args=[process.pk])
 
     def process_id(self, process):
-        return mark_safe('<a href="{}">{}</a>'.format(
-            self.get_process_link(process),
-            process.pk)
+        return mark_safe(
+            f'<a href="{self.get_process_link(process)}">{process.pk}</a>'
         )
     process_id.short_description = '#'
 
     def process_summary(self, process):
-        return mark_safe('<a href="{}">{}</a>'.format(
-            self.get_process_link(process),
-            process.summary())
+        return mark_safe(
+            f'<a href="{self.get_process_link(process)}">{process.summary()}</a>'
         )
     process_summary.short_description = 'Summary'
 
     def active_tasks(self, process):
         if process.finished is None:
-            return mark_safe('<a href="{}">{}</a>'.format(
-                self.get_process_link(process),
-                process.active_tasks().count())
+            return mark_safe(
+                f'<a href="{self.get_process_link(process)}">{process.active_tasks().count()}</a>'
             )
         return ''
     active_tasks.short_description = _('Active Tasks')
@@ -333,22 +327,21 @@ class ProcessListView(FlowViewPermissionMixin,
             [<app_label>/<flow_label>/process_list.html,
              'viewflow/flow/process_list.html']
         """
-        if self.template_name is None:
-            opts = self.flow_class._meta
-
-            return (
-                '{}/{}/process_list.html'.format(opts.app_label, opts.flow_label),
-                'viewflow/flow/process_list.html')
-        else:
+        if self.template_name is not None:
             return [self.template_name]
+        opts = self.flow_class._meta
+
+        return (
+            f'{opts.app_label}/{opts.flow_label}/process_list.html',
+            'viewflow/flow/process_list.html',
+        )
 
     def get_queryset(self):
         """Filtered process list."""
         process_class = self.flow_class.process_class
         self.model = process_class
         queryset = process_class.objects.filter(flow_class=self.flow_class)
-        ordering = self.get_ordering()
-        if ordering:
+        if ordering := self.get_ordering():
             if isinstance(ordering, six.string_types):
                 ordering = (ordering,)
             queryset = queryset.order_by(*ordering)

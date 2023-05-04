@@ -14,15 +14,13 @@ def users(request):
 def login_as(request):
     user = None
 
-    user_pk = request.GET.get('user_pk', None)
-    if user_pk:
+    if user_pk := request.GET.get('user_pk', None):
         try:
             user = User.objects.get(pk=user_pk)
         except User.DoesNotExist:
             pass
 
-    username = request.GET.get('username', None)
-    if username:
+    if username := request.GET.get('username', None):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -35,10 +33,11 @@ def login_as(request):
         logout(request)
 
     redirect_to = request.GET.get('next')
-    if not redirect_to:
-        return redirect('/workflow/')
-    else:
-        return HttpResponseRedirect(redirect_to)
+    return (
+        HttpResponseRedirect(redirect_to)
+        if redirect_to
+        else redirect('/workflow/')
+    )
 
 
 urlpatterns = [

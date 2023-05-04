@@ -68,7 +68,7 @@ class MessageUserMixin(object):
         """
         namespace = self.request.resolver_match.namespace
 
-        process_url = reverse('{}:detail'.format(namespace), args=[self.activation.process.pk])
+        process_url = reverse(f'{namespace}:detail', args=[self.activation.process.pk])
         process_link = '<a href="{process_url}">#{process_pk}</a>'.format(
             process_url=process_url,
             process_pk=self.activation.process.pk)
@@ -79,10 +79,7 @@ class MessageUserMixin(object):
             task_url=task_url,
             task_pk=self.activation.task.pk)
 
-        kwargs.update({
-            'process': process_link,
-            'task': task_link
-        })
+        kwargs |= {'process': process_link, 'task': task_link}
         message = mark_safe(_(message).format(**kwargs))
 
         messages.add_message(self.request, level, message, fail_silently=fail_silently)
@@ -119,13 +116,13 @@ class FlowListMixin(object):
     def get_flow_namespace(self, flow_class):
         namespace = self.ns_map.get(flow_class)
         if namespace is None:
-            raise FlowRuntimeError("{} are not registered in {}".format(flow_class, self))
+            raise FlowRuntimeError(f"{flow_class} are not registered in {self}")
         if not self.ns_map_absolute:
-            return "{}:{}".format(self.request.resolver_match.namespace, namespace)
+            return f"{self.request.resolver_match.namespace}:{namespace}"
 
     def get_process_url(self, process, url_type='detail'):
         namespace = self.get_flow_namespace(process.flow_class)
-        return reverse('{}:{}'.format(namespace, url_type), args=[process.pk])
+        return reverse(f'{namespace}:{url_type}', args=[process.pk])
 
     def get_task_url(self, task, url_type=None):
         namespace = self.get_flow_namespace(task.process.flow_class)

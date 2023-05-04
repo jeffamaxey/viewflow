@@ -75,11 +75,7 @@ class Context(object):
         self.current_context_data = kwargs
 
     def __getattr__(self, name):
-        stack = []
-
-        if hasattr(_context_stack, 'data'):
-            stack = _context_stack.data
-
+        stack = _context_stack.data if hasattr(_context_stack, 'data') else []
         for scope in reversed(stack):
             if name in scope:
                 return scope[name]
@@ -148,9 +144,7 @@ class Activation(object):
     @status.getter()
     def get_status(self):
         """Get the status of the activated task."""
-        if self.task:
-            return self.task.status
-        return STATUS.UNRIPE
+        return self.task.status if self.task else STATUS.UNRIPE
 
     def get_available_transitions(self):
         """List of all available activation transitions."""
@@ -199,9 +193,8 @@ class Activation(object):
         self.task.save()
 
         # call custom undo handler
-        handler_name = '{}_undo'.format(self.flow_task.name)
-        handler = getattr(self.flow_class.instance, handler_name, None)
-        if handler:
+        handler_name = f'{self.flow_task.name}_undo'
+        if handler := getattr(self.flow_class.instance, handler_name, None):
             handler(self)
 
     @status.transition(source=STATUS.NEW, target=STATUS.CANCELED)
@@ -304,9 +297,8 @@ class StartActivation(Activation):
         self.task.save()
 
         # call custom undo handler
-        handler_name = '{}_undo'.format(self.flow_task.name)
-        handler = getattr(self.flow_class.instance, handler_name, None)
-        if handler:
+        handler_name = f'{self.flow_task.name}_undo'
+        if handler := getattr(self.flow_class.instance, handler_name, None):
             handler(self)
 
     def has_perm(self, user):

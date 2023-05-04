@@ -20,9 +20,7 @@ class FrontendViewSet(object):
     @property
     def ns_map(self):
         return {
-            flow_class: "{}:{}".format(
-                flow_class._meta.app_label,
-                flow_class._meta.flow_label)
+            flow_class: f"{flow_class._meta.app_label}:{flow_class._meta.flow_label}"
             for flow_class, flow_site in self.registry.items()
         }
 
@@ -39,8 +37,7 @@ class FrontendViewSet(object):
         result = {
             'ns_map': self.ns_map,
             'viewset': self,
-        }
-        result.update(kwargs)
+        } | kwargs
         return {name: value for name, value in result.items()
                 if hasattr(view_class, name)}
 
@@ -153,12 +150,10 @@ class FrontendViewSet(object):
             for flow_class, flow_router in items:
                 flow_label = flow_class._meta.flow_label
                 app_views.append(
-                    path('{}/'.format(flow_label), include((flow_router.urls, flow_label)))
+                    path(f'{flow_label}/', include((flow_router.urls, flow_label)))
                 )
 
-            result.append(
-                path('{}/'.format(app_label), include((app_views, app_label)))
-            )
+            result.append(path(f'{app_label}/', include((app_views, app_label))))
 
         return result
 

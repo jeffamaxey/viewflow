@@ -37,18 +37,14 @@ class Test(TestCase):
         task = act.process.get_task(TestTemplateTagsFlow.view)
         url = Template("{% load viewflow %}{% flowurl task 'assign' user=user %}").render(
             Context({'request': self.request, 'task': task, 'user': User()}))
-        self.assertEqual(
-            '/test/{}/view/{}/assign/'.format(act.process.pk, task.pk),
-            url)
+        self.assertEqual(f'/test/{act.process.pk}/view/{task.pk}/assign/', url)
 
     def test_flowurl_guess_by_task(self):
         act = TestTemplateTagsFlow.start.run()
         task = act.process.get_task(TestTemplateTagsFlow.view)
         url = Template("{% load viewflow %}{% flowurl task user=user %}").render(
             Context({'request': self.request, 'task': task, 'user': User()}))
-        self.assertEqual(
-            '/test/{}/view/{}/assign/'.format(act.process.pk, task.pk),
-            url)
+        self.assertEqual(f'/test/{act.process.pk}/view/{task.pk}/assign/', url)
 
     def test_flow_perms(self):
         act = TestTemplateTagsFlow.start.run()

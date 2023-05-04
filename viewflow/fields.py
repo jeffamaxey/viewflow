@@ -12,25 +12,27 @@ from .token import Token
 def import_flow_by_ref(flow_strref):
     """Return flow class by flow string reference."""
     app_label, flow_path = flow_strref.split('/')
-    return import_string('{}.{}'.format(get_app_package(app_label), flow_path))
+    return import_string(f'{get_app_package(app_label)}.{flow_path}')
 
 
 def get_flow_ref(flow_class):
     """Convert flow class to string reference."""
-    module = "{}.{}".format(flow_class.__module__, flow_class.__name__)
+    module = f"{flow_class.__module__}.{flow_class.__name__}"
     app_label, app_package = get_containing_app_data(module)
     if app_label is None:
-        raise FlowRuntimeError('No application found for {}. Check your INSTALLED_APPS setting'.format(module))
+        raise FlowRuntimeError(
+            f'No application found for {module}. Check your INSTALLED_APPS setting'
+        )
 
     subpath = module[len(app_package) + 1:]
-    return "{}/{}".format(app_label, subpath)
+    return f"{app_label}/{subpath}"
 
 
 def import_task_by_ref(task_strref):
     """Return flow task by reference like `app_label/path.to.Flowcls.task_name`."""
     app_label, flow_path = task_strref.split('/')
     flow_path, task_name = flow_path.rsplit('.', 1)
-    flow_class = import_string('{}.{}'.format(get_app_package(app_label), flow_path))
+    flow_class = import_string(f'{get_app_package(app_label)}.{flow_path}')
     return flow_class._meta.node(task_name)
 
 
@@ -39,11 +41,13 @@ def get_task_ref(flow_task):
     module = flow_task.flow_class.__module__
     app_label, app_package = get_containing_app_data(module)
     if app_label is None:
-        raise FlowRuntimeError('No application found for {}. Check your INSTALLED_APPS setting'.format(module))
+        raise FlowRuntimeError(
+            f'No application found for {module}. Check your INSTALLED_APPS setting'
+        )
 
     subpath = module[len(app_package) + 1:]
 
-    return "{}/{}.{}.{}".format(app_label, subpath, flow_task.flow_class.__name__, flow_task.name)
+    return f"{app_label}/{subpath}.{flow_task.flow_class.__name__}.{flow_task.name}"
 
 
 class _SubfieldBase(type):
@@ -64,9 +68,7 @@ class _Creator(object):
         self.field = field
 
     def __get__(self, obj, type=None):
-        if obj is None:
-            return self
-        return obj.__dict__[self.field.name]
+        return self if obj is None else obj.__dict__[self.field.name]
 
     def __set__(self, obj, value):
         obj.__dict__[self.field.name] = self.field.to_python(value)
@@ -98,9 +100,7 @@ class FlowReferenceField(with_metaclass(_SubfieldBase, models.CharField)):
         return value
 
     def get_prep_value(self, value):  # noqa D1o2
-        if value is None or value == '':
-            return value
-        elif isinstance(value, str):
+        if value is None or value == '' or isinstance(value, str):
             return value
         elif not isinstance(value, type):
             # HACK: Django calls callable due query parameter
@@ -147,9 +147,7 @@ class TokenField(with_metaclass(_SubfieldBase, models.CharField)):
         super(TokenField, self).__init__(*args, **kwargs)
 
     def to_python(self, value):  # noqa D102
-        if isinstance(value, string_types) and value:
-            return Token(value)
-        return value
+        return Token(value) if isinstance(value, string_types) and value else value
 
     def get_prep_value(self, value):
         if not isinstance(value, string_types) and value:

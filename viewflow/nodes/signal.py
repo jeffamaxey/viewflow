@@ -57,9 +57,10 @@ class StartSignal(mixins.TaskDescriptionMixin,
             self.receiver = getattr(self.flow_class.instance, self.receiver.name)
 
         self.signal.connect(
-            self.on_signal, sender=self.sender,
-            dispatch_uid="viewflow.flow.signal/{}.{}.{}".format(
-                self.flow_class.__module__, self.flow_class.__name__, self.name))
+            self.on_signal,
+            sender=self.sender,
+            dispatch_uid=f"viewflow.flow.signal/{self.flow_class.__module__}.{self.flow_class.__name__}.{self.name}",
+        )
 
 
 class Signal(mixins.TaskDescriptionMixin,
@@ -116,16 +117,18 @@ class Signal(mixins.TaskDescriptionMixin,
         """Signal handler."""
         if self.task_loader is None:
             if 'task' not in signal_kwargs:
-                raise FlowRuntimeError('{} have no task_loader and got signal without task instance'.format(self.name))
+                raise FlowRuntimeError(
+                    f'{self.name} have no task_loader and got signal without task instance'
+                )
             return self.receiver(sender=sender, **signal_kwargs)
         else:
             task = self.task_loader(self, sender=sender, **signal_kwargs)
-            if task is None:
-                if self.allow_skip is False:
-                    raise FlowRuntimeError("The task_loader didn't return any task for {}\n{}".format(
-                        self.name, signal_kwargs))
-            else:
+            if task is not None:
                 return self.receiver(sender=sender, _task=task, **signal_kwargs)
+            if self.allow_skip is False:
+                raise FlowRuntimeError(
+                    f"The task_loader didn't return any task for {self.name}\n{signal_kwargs}"
+                )
 
     def ready(self):
         """Resolve internal `this`-references. and subscribe to the signal."""
@@ -135,6 +138,7 @@ class Signal(mixins.TaskDescriptionMixin,
             self.task_loader = getattr(self.flow_class.instance, self.task_loader.name)
 
         self.signal.connect(
-            self.on_signal, sender=self.sender,
-            dispatch_uid="viewflow.flow.signal/{}.{}.{}".format(
-                self.flow_class.__module__, self.flow_class.__name__, self.name))
+            self.on_signal,
+            sender=self.sender,
+            dispatch_uid=f"viewflow.flow.signal/{self.flow_class.__module__}.{self.flow_class.__name__}.{self.name}",
+        )

@@ -22,16 +22,16 @@ class DetailTaskView(generic.TemplateView):
              <app_label>/<flow_label>/task_detail.html,
              'viewflow/flow/task_detail.html']
         """
-        if self.template_name is None:
-            flow_task = self.activation.flow_task
-            opts = self.activation.flow_task.flow_class._meta
-
-            return (
-                '{}/{}/{}_detail.html'.format(opts.app_label, opts.flow_label, flow_task.name),
-                '{}/{}/task_detail.html'.format(opts.app_label, opts.flow_label),
-                'viewflow/flow/task_detail.html')
-        else:
+        if self.template_name is not None:
             return [self.template_name]
+        flow_task = self.activation.flow_task
+        opts = self.activation.flow_task.flow_class._meta
+
+        return (
+            f'{opts.app_label}/{opts.flow_label}/{flow_task.name}_detail.html',
+            f'{opts.app_label}/{opts.flow_label}/task_detail.html',
+            'viewflow/flow/task_detail.html',
+        )
 
     def get_context_data(self, **kwargs):
         """Context for a detail view.
@@ -66,14 +66,14 @@ class DetailProcessView(FlowViewPermissionMixin, generic.DetailView):
             [<app_label>/<flow_label>/process_detail.html,
              'viewflow/flow/process_detail.html']
         """
-        if self.template_name is None:
-            opts = self.flow_class._meta
-
-            return (
-                '{}/{}/process_detail.html'.format(opts.app_label, opts.flow_label),
-                'viewflow/flow/process_detail.html')
-        else:
+        if self.template_name is not None:
             return [self.template_name]
+        opts = self.flow_class._meta
+
+        return (
+            f'{opts.app_label}/{opts.flow_label}/process_detail.html',
+            'viewflow/flow/process_detail.html',
+        )
 
     def get_context_data(self, **kwargs):
         """Context for a detail view.

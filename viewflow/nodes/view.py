@@ -42,16 +42,18 @@ class BaseStart(mixins.TaskDescriptionViewMixin,
         if not self._view:
             if not self._view_class:
                 return self.start_view_class.as_view()
-            else:
-                self._view = self._view_class.as_view(**self._view_args)
-                return self._view
+            self._view = self._view_class.as_view(**self._view_args)
+            return self._view
         return self._view
 
     def urls(self):
         """Start view url."""
         urls = super(BaseStart, self).urls()
         urls.append(
-            re_path(r'^{}/$'.format(self.name), self.view, {'flow_task': self}, name=self.name))
+            re_path(
+                f'^{self.name}/$', self.view, {'flow_task': self}, name=self.name
+            )
+        )
         return urls
 
 
@@ -69,10 +71,7 @@ class Start(mixins.PermissionMixin, BaseStart):
             .Available(username='employee')
             .Available(lambda user: user.is_super_user)
         """
-        if owner:
-            self._owner = owner
-        else:
-            self._owner = owner_kwargs
+        self._owner = owner if owner else owner_kwargs
         return self
 
     def get_task_url(self, task, url_type='guess', namespace='', **kwargs):
@@ -81,10 +80,13 @@ class Start(mixins.PermissionMixin, BaseStart):
         If url_type is 'guess' and task can be executed by user, the
         'execute' url is returned.
         """
-        if url_type in ['execute', 'guess']:
-            if 'user' in kwargs and self.can_execute(kwargs['user'], task):
-                url_name = '{}:{}'.format(namespace, self.name)
-                return reverse(url_name)
+        if (
+            url_type in ['execute', 'guess']
+            and 'user' in kwargs
+            and self.can_execute(kwargs['user'], task)
+        ):
+            url_name = f'{namespace}:{self.name}'
+            return reverse(url_name)
 
         return super(Start, self).get_task_url(task, url_type=url_type, namespace=namespace, **kwargs)
 
@@ -98,9 +100,8 @@ class Start(mixins.PermissionMixin, BaseStart):
         if self._owner:
             if callable(self._owner):
                 return self._owner(user)
-            else:
-                owner = get_user_model()._default_manager.get(**self._owner)
-                return is_owner(owner, user)
+            owner = get_user_model()._default_manager.get(**self._owner)
+            return is_owner(owner, user)
 
         elif self._owner_permission:
             obj = None
@@ -156,8 +157,12 @@ class BaseView(mixins.TaskDescriptionViewMixin,
         """Add `/<process_pk>/<task_pk>/` url."""
         urls = super(BaseView, self).urls()
         urls.append(
-            re_path(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/$'.format(self.name),
-                    self.view, {'flow_task': self}, name=self.name)
+            re_path(
+                f'^(?P<process_pk>\d+)/{self.name}/(?P<task_pk>\d+)/$',
+                self.view,
+                {'flow_task': self},
+                name=self.name,
+            )
         )
         return urls
 
@@ -209,10 +214,7 @@ class View(mixins.PermissionMixin, BaseView):
         """
         result = copy(self)
 
-        if owner:
-            result._owner = owner
-        else:
-            result._owner = owner_kwargs
+        result._owner = owner if owner else owner_kwargs
         return result
 
     def onCreate(self, ref):
@@ -246,10 +248,22 @@ class View(mixins.PermissionMixin, BaseView):
     def urls(self):
         """Add /assign/ and /unassign/ task urls."""
         urls = super(View, self).urls()
-        urls.append(re_path(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/assign/$'.format(self.name),
-                            self.assign_view, {'flow_task': self}, name="{}__assign".format(self.name)))
-        urls.append(re_path(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/unassign/$'.format(self.name),
-                            self.unassign_view, {'flow_task': self}, name="{}__unassign".format(self.name)))
+        urls.append(
+            re_path(
+                f'^(?P<process_pk>\d+)/{self.name}/(?P<task_pk>\d+)/assign/$',
+                self.assign_view,
+                {'flow_task': self},
+                name=f"{self.name}__assign",
+            )
+        )
+        urls.append(
+            re_path(
+                f'^(?P<process_pk>\d+)/{self.name}/(?P<task_pk>\d+)/unassign/$',
+                self.unassign_view,
+                {'flow_task': self},
+                name=f"{self.name}__unassign",
+            )
+        )
         return urls
 
     def get_task_url(self, task, url_type='guess', namespace='', **kwargs):
@@ -261,22 +275,31 @@ class View(mixins.PermissionMixin, BaseView):
         user = kwargs.get('user', None)
 
         # assign
-        if url_type in ['assign', 'guess']:
-            if task.status == STATUS.NEW and self.can_assign(user, task):
-                url_name = '{}:{}__assign'.format(namespace, self.name)
-                return reverse(url_name, kwargs={'process_pk': task.process_id, 'task_pk': task.pk})
+        if (
+            url_type in ['assign', 'guess']
+            and task.status == STATUS.NEW
+            and self.can_assign(user, task)
+        ):
+            url_name = f'{namespace}:{self.name}__assign'
+            return reverse(url_name, kwargs={'process_pk': task.process_id, 'task_pk': task.pk})
 
         # execute
-        if url_type in ['execute', 'guess']:
-            if task.status == STATUS.ASSIGNED and self.can_execute(user, task):
-                url_name = '{}:{}'.format(namespace, self.name)
-                return reverse(url_name, kwargs={'process_pk': task.process_id, 'task_pk': task.pk})
+        if (
+            url_type in ['execute', 'guess']
+            and task.status == STATUS.ASSIGNED
+            and self.can_execute(user, task)
+        ):
+            url_name = f'{namespace}:{self.name}'
+            return reverse(url_name, kwargs={'process_pk': task.process_id, 'task_pk': task.pk})
 
         # unassign
-        if url_type in ['unassign']:
-            if task.status == STATUS.ASSIGNED and self.can_unassign(user, task):
-                url_name = '{}:{}__unassign'.format(namespace, self.name)
-                return reverse(url_name, kwargs={'process_pk': task.process_id, 'task_pk': task.pk})
+        if (
+            url_type in ['unassign']
+            and task.status == STATUS.ASSIGNED
+            and self.can_unassign(user, task)
+        ):
+            url_name = f'{namespace}:{self.name}__unassign'
+            return reverse(url_name, kwargs={'process_pk': task.process_id, 'task_pk': task.pk})
 
         return super(View, self).get_task_url(task, url_type, namespace=namespace, **kwargs)
 

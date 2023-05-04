@@ -45,16 +45,16 @@ class BaseFlowMixin(object):
              <app_label>/<flow_label>/task.html,
              'viewflow/flow/task.html']
         """
-        if self.template_name is None:
-            flow_task = self.activation.flow_task
-            opts = self.activation.flow_task.flow_class._meta
-
-            return (
-                '{}/{}/{}.html'.format(opts.app_label, opts.flow_label, flow_task.name),
-                '{}/{}/task.html'.format(opts.app_label, opts.flow_label),
-                'viewflow/flow/task.html')
-        else:
+        if self.template_name is not None:
             return [self.template_name]
+        flow_task = self.activation.flow_task
+        opts = self.activation.flow_task.flow_class._meta
+
+        return (
+            f'{opts.app_label}/{opts.flow_label}/{flow_task.name}.html',
+            f'{opts.app_label}/{opts.flow_label}/task.html',
+            'viewflow/flow/task.html',
+        )
 
     @method_decorator(flow_view)
     def dispatch(self, request, **kwargs):
@@ -128,16 +128,16 @@ class AssignTaskView(MessageUserMixin, generic.TemplateView):
              <app_label>/<flow_label>/task_assign.html,
              'viewflow/flow/task_assign.html']
         """
-        if self.template_name is None:
-            flow_task = self.activation.flow_task
-            opts = self.activation.flow_class._meta
-
-            return (
-                '{}/{}/{}_assign.html'.format(opts.app_label, opts.flow_label, flow_task.name),
-                '{}/{}/task_assign.html'.format(opts.app_label, opts.flow_label),
-                'viewflow/flow/task_assign.html')
-        else:
+        if self.template_name is not None:
             return [self.template_name]
+        flow_task = self.activation.flow_task
+        opts = self.activation.flow_class._meta
+
+        return (
+            f'{opts.app_label}/{opts.flow_label}/{flow_task.name}_assign.html',
+            f'{opts.app_label}/{opts.flow_label}/task_assign.html',
+            'viewflow/flow/task_assign.html',
+        )
 
     def get_context_data(self, **kwargs):
         """Context for a detail view.
@@ -159,7 +159,7 @@ class AssignTaskView(MessageUserMixin, generic.TemplateView):
             back = '/'
 
         if '_continue' in self.request.POST and back:
-            url = "{}?back={}".format(url, urlquote(back))
+            url = f"{url}?back={urlquote(back)}"
         elif back:
             url = back
 

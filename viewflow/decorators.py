@@ -16,18 +16,18 @@ def flow_start_func(func):
     def _wrapper(flow_task, *args, **kwargs):
         exc = True
         try:
-            try:
-                activation = flow_task.activation_class()
-                activation.initialize(flow_task, None)
-                return func(activation, *args, **kwargs)
-            except:
-                exc = False
-                if activation.lock:
-                    activation.lock.__exit__(*sys.exc_info())
-                raise
+            activation = flow_task.activation_class()
+            activation.initialize(flow_task, None)
+            return func(activation, *args, **kwargs)
+        except:
+            exc = False
+            if activation.lock:
+                activation.lock.__exit__(*sys.exc_info())
+            raise
         finally:
             if exc and activation.lock:
                 activation.lock.__exit__(None, None, None)
+
     return _wrapper
 
 
@@ -125,18 +125,18 @@ def flow_start_signal(handler):
     def _wrapper(sender, flow_task=None, **signal_kwargs):
         exc = True
         try:
-            try:
-                activation = flow_task.activation_class()
-                activation.initialize(flow_task, None)
-                return handler(sender=sender, activation=activation, **signal_kwargs)
-            except:
-                exc = False
-                if activation.lock:
-                    activation.lock.__exit__(*sys.exc_info())
-                raise
+            activation = flow_task.activation_class()
+            activation.initialize(flow_task, None)
+            return handler(sender=sender, activation=activation, **signal_kwargs)
+        except:
+            exc = False
+            if activation.lock:
+                activation.lock.__exit__(*sys.exc_info())
+            raise
         finally:
             if exc and activation.lock:
                 activation.lock.__exit__(None, None, None)
+
     return _wrapper
 
 
@@ -170,19 +170,18 @@ def flow_start_view(view):
     def _wrapper(request, flow_class, flow_task, **kwargs):
         exc = True
         try:
-            try:
-                activation = flow_task.activation_class()
-                activation.initialize(flow_task, None)
+            activation = flow_task.activation_class()
+            activation.initialize(flow_task, None)
 
-                request.activation = activation
-                request.process = activation.process
-                request.task = activation.task
-                return view(request, **kwargs)
-            except:
-                exc = False
-                if activation.lock:
-                    activation.lock.__exit__(*sys.exc_info())
-                raise
+            request.activation = activation
+            request.process = activation.process
+            request.task = activation.task
+            return view(request, **kwargs)
+        except:
+            exc = False
+            if activation.lock:
+                activation.lock.__exit__(*sys.exc_info())
+            raise
         finally:
             if exc and activation.lock:
                 activation.lock.__exit__(None, None, None)

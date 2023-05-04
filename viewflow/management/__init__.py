@@ -21,7 +21,7 @@ def create_permissions(app_config, verbosity=2, interactive=True, using=DEFAULT_
     if not router.allow_migrate_model(using, Permission):
         return
 
-    searched_perms = list()  # (content_type, (codename, name))
+    searched_perms = []
     ctypes = set()           # The codenames and ctypes that should exist.
 
     for klass in app_config.get_models():
@@ -34,9 +34,9 @@ def create_permissions(app_config, verbosity=2, interactive=True, using=DEFAULT_
         ctypes.add(ctype)
 
         from django.contrib.auth.management import _get_all_permissions
-        for perm in _get_all_permissions(klass._meta):
-            searched_perms.append((ctype, perm))
-
+        searched_perms.extend(
+            (ctype, perm) for perm in _get_all_permissions(klass._meta)
+        )
     all_perms = set(Permission.objects.using(using).filter(
         content_type__in=ctypes,
     ).values_list(
@@ -52,13 +52,13 @@ def create_permissions(app_config, verbosity=2, interactive=True, using=DEFAULT_
     Permission.objects.using(using).bulk_create(perms)
     if verbosity >= 2:
         for perm in perms:
-            print("Adding permission '%s'" % perm)
+            print(f"Adding permission '{perm}'")
 
 
 def import_flows(app_config, **kwargs):
     """Pre-import flows to allow permissions auto-creation."""
     try:
-        __import__('{}.flows'.format(app_config.module.__name__))
+        __import__(f'{app_config.module.__name__}.flows')
     except ImportError:
         pass
 

@@ -20,10 +20,12 @@ def task_management_menu(activation, request):
     if request.user.has_perm(activation.flow_class._meta.manage_permission_name):
         for transition in activation.get_available_transitions():
             if transition.can_proceed(activation):
-                url = activation.flow_task.get_task_url(
-                    activation.task, transition.name, user=request.user,
-                    namespace=request.resolver_match.namespace)
-                if url:
+                if url := activation.flow_task.get_task_url(
+                    activation.task,
+                    transition.name,
+                    user=request.user,
+                    namespace=request.resolver_match.namespace,
+                ):
                     actions.append((transition.name.replace('_', ' ').title(), url))
 
     return {'actions': actions,

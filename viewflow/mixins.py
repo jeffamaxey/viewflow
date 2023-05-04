@@ -46,8 +46,12 @@ class DetailViewMixin(object):
         """Add `/<process_pk>/<task_pk>/detail/` url."""
         urls = super(DetailViewMixin, self).urls()
         urls.append(
-            re_path(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/detail/$'.format(self.name),
-                    self.detail_view, {'flow_task': self}, name="{}__detail".format(self.name))
+            re_path(
+                f'^(?P<process_pk>\d+)/{self.name}/(?P<task_pk>\d+)/detail/$',
+                self.detail_view,
+                {'flow_task': self},
+                name=f"{self.name}__detail",
+            )
         )
         return urls
 
@@ -58,7 +62,7 @@ class DetailViewMixin(object):
         not return a value, the details page would be used.
         """
         if url_type in ['detail', 'guess']:
-            url_name = '{}:{}__detail'.format(namespace, self.name)
+            url_name = f'{namespace}:{self.name}__detail'
             return reverse(url_name, args=[task.process_id, task.pk])
         return super(DetailViewMixin, self).get_task_url(task, url_type, namespace=namespace, **kwargs)
 
@@ -85,15 +89,19 @@ class UndoViewMixin(object):
         """Add `/<process_pk>/<task_pk>/undo/` url."""
         urls = super(UndoViewMixin, self).urls()
         urls.append(
-            re_path(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/undo/$'.format(self.name),
-                    self.undo_view, {'flow_task': self}, name="{}__undo".format(self.name))
+            re_path(
+                f'^(?P<process_pk>\d+)/{self.name}/(?P<task_pk>\d+)/undo/$',
+                self.undo_view,
+                {'flow_task': self},
+                name=f"{self.name}__undo",
+            )
         )
         return urls
 
     def get_task_url(self, task, url_type='guess', namespace='', **kwargs):
         """Handle for url_type='undo'."""
         if url_type in ['undo']:
-            url_name = '{}:{}__undo'.format(namespace, self.name)
+            url_name = f'{namespace}:{self.name}__undo'
             return reverse(url_name, args=[task.process_id, task.pk])
         return super(UndoViewMixin, self).get_task_url(task, url_type, namespace=namespace, **kwargs)
 
@@ -116,15 +124,19 @@ class CancelViewMixin(object):
         """Add `/<process_pk>/<task_pk>/cancel/` url."""
         urls = super(CancelViewMixin, self).urls()
         urls.append(
-            re_path(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/cancel/$'.format(self.name),
-                    self.cancel_view, {'flow_task': self}, name="{}__cancel".format(self.name))
+            re_path(
+                f'^(?P<process_pk>\d+)/{self.name}/(?P<task_pk>\d+)/cancel/$',
+                self.cancel_view,
+                {'flow_task': self},
+                name=f"{self.name}__cancel",
+            )
         )
         return urls
 
     def get_task_url(self, task, url_type='guess', namespace='', **kwargs):
         """Handle for url_type='cancel'."""
         if url_type in ['cancel']:
-            url_name = '{}:{}__cancel'.format(namespace, self.name)
+            url_name = f'{namespace}:{self.name}__cancel'
             return reverse(url_name, args=[task.process_id, task.pk])
         return super(CancelViewMixin, self).get_task_url(task, url_type, namespace=namespace, **kwargs)
 
@@ -146,14 +158,20 @@ class PerformViewMixin(object):
     def urls(self):
         """Add `/<process_pk>/<task_pk>/perform/` url."""
         urls = super(PerformViewMixin, self).urls()
-        urls.append(re_path(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/perform/$'.format(self.name),
-                    self.perform_view, {'flow_task': self}, name="{}__perform".format(self.name)))
+        urls.append(
+            re_path(
+                f'^(?P<process_pk>\d+)/{self.name}/(?P<task_pk>\d+)/perform/$',
+                self.perform_view,
+                {'flow_task': self},
+                name=f"{self.name}__perform",
+            )
+        )
         return urls
 
     def get_task_url(self, task, url_type='guess', namespace='', **kwargs):
         """Handle for url_type='perform'."""
         if url_type in ['perform']:
-            url_name = '{}:{}__perform'.format(namespace, self.name)
+            url_name = f'{namespace}:{self.name}__perform'
             return reverse(url_name, args=[task.process_id, task.pk])
         return super(PerformViewMixin, self).get_task_url(task, url_type, namespace=namespace, **kwargs)
 
@@ -176,15 +194,19 @@ class ActivateNextMixin(object):
         """Add `/<process_pk>/<task_pk>/activate_next/` url."""
         urls = super(ActivateNextMixin, self).urls()
         urls.append(
-            re_path(r'^(?P<process_pk>\d+)/{}/(?P<task_pk>\d+)/activate_next/$'.format(self.name),
-                    self.activate_next_view, {'flow_task': self}, name="{}__activate_next".format(self.name))
+            re_path(
+                f'^(?P<process_pk>\d+)/{self.name}/(?P<task_pk>\d+)/activate_next/$',
+                self.activate_next_view,
+                {'flow_task': self},
+                name=f"{self.name}__activate_next",
+            )
         )
         return urls
 
     def get_task_url(self, task, url_type='guess', namespace='', **kwargs):
         """Handle url_type='activate_next'."""
         if url_type in ['activate_next']:
-            url_name = '{}:{}__activate_next'.format(namespace, self.name)
+            url_name = f'{namespace}:{self.name}__activate_next'
             return reverse(url_name, args=[task.process_id, task.pk])
         return super(ActivateNextMixin, self).get_task_url(task, url_type, namespace=namespace, **kwargs)
 
@@ -239,10 +261,8 @@ class PermissionMixin(object):
                 raise ValueError('Non qualified permission name expected')
 
             if not self._owner_permission:
-                self._owner_permission = 'can_{}_{}'.format(
-                    self.name, self.flow_class.process_class._meta.model_name)
-                self._owner_permission_help_text = 'Can {}'.format(
-                    self.name.replace('_', ' '))
+                self._owner_permission = f'can_{self.name}_{self.flow_class.process_class._meta.model_name}'
+                self._owner_permission_help_text = f"Can {self.name.replace('_', ' ')}"
             elif not self._owner_permission_help_text:
                 self._owner_permission_help_text = self._owner_permission.replace('_', ' ').capitalize()
 
@@ -255,9 +275,7 @@ class PermissionMixin(object):
                     ((self._owner_permission, self._owner_permission_help_text), )
                 )
 
-            self._owner_permission = '{}.{}'.format(
-                self.flow_class.process_class._meta.app_label,
-                self._owner_permission)
+            self._owner_permission = f'{self.flow_class.process_class._meta.app_label}.{self._owner_permission}'
 
         super(PermissionMixin, self).ready()
 

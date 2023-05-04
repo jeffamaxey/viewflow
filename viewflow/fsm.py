@@ -89,8 +89,7 @@ class TransitionDescriptor(object):
     def can_proceed(self, instance, check_conditions=True):
         """Check is transition available."""
         current_state = self.state.get(instance)
-        transition = self.get_transition(current_state, instance)
-        if transition:
+        if transition := self.get_transition(current_state, instance):
             return transition.conditions_met(instance)
         return False
 
@@ -131,7 +130,7 @@ class SuperTransitionDescriptor(TransitionDescriptor):
                 if not isinstance(super_descriptor, SuperTransitionDescriptor):
                     break
         else:
-            raise ValueError('Base transition not found for {}'.format(self.name))
+            raise ValueError(f'Base transition not found for {self.name}')
 
         return super_descriptor
 
@@ -183,9 +182,7 @@ class State(object):
         self._getter = None
 
     def __get__(self, instance, type=None):
-        if instance is None:
-            return self
-        return self.get(instance)
+        return self if instance is None else self.get(instance)
 
     def __set__(self, instance, value):
         if instance is None:
@@ -208,7 +205,7 @@ class State(object):
     @property
     def propname(self):
         """Default class attribute name to store the state."""
-        return '_fsm{}'.format(id(self))
+        return f'_fsm{id(self)}'
 
     def transition(self, source=None, target=None, conditions=None):
         """Decorator to mark transition methods."""
@@ -253,7 +250,9 @@ class State(object):
 
     def get_available_transitions(self, instance):
         """List of transitions available from the current state."""
-        transitions_cache = instance.__class__.__dict__.get('_transitions{}'.format(self.propname), None)
+        transitions_cache = instance.__class__.__dict__.get(
+            f'_transitions{self.propname}', None
+        )
         if transitions_cache is None:
             transitions_cache = {}
             descriptors = inspect.getmembers(instance.__class__, lambda attr: isinstance(attr, TransitionDescriptor))
@@ -263,7 +262,7 @@ class State(object):
                         transitions_cache[source] = []
                     transitions_cache[source].append(descriptor)
 
-            setattr(instance.__class__, '_transitions{}'.format(self.propname), transitions_cache)
+            setattr(instance.__class__, f'_transitions{self.propname}', transitions_cache)
 
         result = [descriptor for descriptor in transitions_cache.get(self.get(instance), [])
                   if descriptor.can_proceed(instance)]

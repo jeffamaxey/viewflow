@@ -93,8 +93,7 @@ class Edge(object):
         return self._edge_class
 
     def __str__(self):
-        return "[{}] {} ---> {}".format(
-            self._edge_class, self._src, self._dst)
+        return f"[{self._edge_class}] {self._src} ---> {self._dst}"
 
 
 class Node(object):

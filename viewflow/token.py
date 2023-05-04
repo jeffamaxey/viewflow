@@ -39,8 +39,8 @@ class Token(object):
     def get_common_split_prefix(self, join_token, task_pk):
         """Common prefix for tokens."""
         if self == join_token:
-            return '{}/{}_'.format(self.token, task_pk)
-        return '{}_'.format(self.token.rsplit('_', 1)[0])
+            return f'{self.token}/{task_pk}_'
+        return f"{self.token.rsplit('_', 1)[0]}_"
 
     def __str__(self):
         return self.token
@@ -59,4 +59,4 @@ class Token(object):
     def split_token_source(cls, prev_token, task_pk):
         """Span a set of uniq tokens with common prefix."""
         for n in count(1):
-            yield Token("{}/{}_{}".format(prev_token, task_pk, n))
+            yield Token(f"{prev_token}/{task_pk}_{n}")

@@ -26,17 +26,17 @@ class _Resolver(object):
         if isinstance(link, Node):
             return self.nodes.get(link.name)
         elif isinstance(link, ThisObject):
-            node = self.nodes.get(link.name)
-            if not node:
-                raise ValueError("Cannot find node with name '%s'." % link.name)
-            return node
+            if node := self.nodes.get(link.name):
+                return node
+            else:
+                raise ValueError(f"Cannot find node with name '{link.name}'.")
         elif isinstance(link, str):
-            node = self.nodes.get(link)
-            if not node:
-                raise ValueError("Cannot find node with name '%s'." % link)
-            return node
+            if node := self.nodes.get(link):
+                return node
 
-        raise ValueError("Can't resolve %s" % link)
+            else:
+                raise ValueError(f"Cannot find node with name '{link}'.")
+        raise ValueError(f"Can't resolve {link}")
 
 
 class FlowMeta(object):
@@ -50,7 +50,7 @@ class FlowMeta(object):
     @property
     def flow_label(self):
         """Unique flow label."""
-        module = "{}.{}".format(self.flow_class.__module__, self.flow_class.__name__)
+        module = f"{self.flow_class.__module__}.{self.flow_class.__name__}"
         app_label, app_package = get_containing_app_data(module)
 
         subpath = module[len(app_package) + 1:]
@@ -73,13 +73,13 @@ class FlowMeta(object):
     def view_permission_name(self):
         """Name of the permission to view flow instances."""
         opts = self.flow_class.process_class._meta
-        return "{}.view_{}".format(opts.app_label, opts.model_name)
+        return f"{opts.app_label}.view_{opts.model_name}"
 
     @property
     def manage_permission_name(self):
         """Name of the permission to administer flow instances."""
         opts = self.flow_class.process_class._meta
-        return "{}.manage_{}".format(opts.app_label, opts.model_name)
+        return f"{opts.app_label}.manage_{opts.model_name}"
 
 
 class FlowInstanceDescriptor(object):
@@ -130,7 +130,7 @@ class FlowMetaClass(type):
             node._resolve(resolver)
 
         incoming = defaultdict(lambda: [])  # node -> [incoming_nodes]
-        for _, node in nodes.items():
+        for node in nodes.values():
             for outgoing_edge in node._outgoing():
                 incoming[outgoing_edge.dst].append(outgoing_edge)
         for target, edges in incoming.items():
@@ -145,7 +145,7 @@ class FlowMetaClass(type):
         new_class._meta = FlowMeta(app_label, new_class, nodes)
 
         # flow back reference
-        for name, node in nodes.items():
+        for node in nodes.values():
             node.flow_class = new_class
 
         # description
@@ -155,13 +155,12 @@ class FlowMetaClass(type):
                 new_class.process_title = docstring[0].strip()
             if 'process_description' not in attrs and len(docstring) > 1:
                 new_class.process_description = dedent(docstring[1]).strip()
-        else:
-            if 'process_title' not in attrs:
-                # convert camel case to separate words
-                new_class.process_title = re.sub('([a-z0-9])([A-Z])', r'\1 \2',
-                                                 re.sub('(.)([A-Z][a-z]+)', r'\1 \2', class_name))
-                if new_class.process_title.endswith(' Flow'):
-                    new_class.process_title = new_class.process_title[:-5]
+        elif 'process_title' not in attrs:
+            # convert camel case to separate words
+            new_class.process_title = re.sub('([a-z0-9])([A-Z])', r'\1 \2',
+                                             re.sub('(.)([A-Z][a-z]+)', r'\1 \2', class_name))
+            if new_class.process_title.endswith(' Flow'):
+                new_class.process_title = new_class.process_title[:-5]
 
         # view process permission
         process_options = new_class.process_class._meta
@@ -170,7 +169,7 @@ class FlowMetaClass(type):
                 process_options.default_permissions += (permission,)
 
         # done flow setup
-        for name, node in nodes.items():
+        for node in nodes.values():
             node.ready()
 
         return new_class

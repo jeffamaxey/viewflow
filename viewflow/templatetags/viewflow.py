@@ -190,8 +190,9 @@ def include_process_data(context, process):
     opts = process.flow_class._meta
 
     template_names = (
-        '{}/{}/process_data.html'.format(opts.app_label, opts.flow_label),
-        'viewflow/flow/process_data.html')
+        f'{opts.app_label}/{opts.flow_label}/process_data.html',
+        'viewflow/flow/process_data.html',
+    )
     template = select_template(template_names)
     context.push()
     try:

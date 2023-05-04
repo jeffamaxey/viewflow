@@ -78,14 +78,14 @@ class ProcessListView(FlowViewPermissionMixin, generic.ListView):
             [<app_label>/<flow_label>/process_list.html,
              'viewflow/flow/process_list.html']
         """
-        if self.template_name is None:
-            opts = self.flow_class._meta
-
-            return (
-                '{}/{}/process_list.html'.format(opts.app_label, opts.flow_label),
-                'viewflow/flow/process_list.html')
-        else:
+        if self.template_name is not None:
             return [self.template_name]
+        opts = self.flow_class._meta
+
+        return (
+            f'{opts.app_label}/{opts.flow_label}/process_list.html',
+            'viewflow/flow/process_list.html',
+        )
 
     def get_context_data(self, **kwargs):
         """Context for a view."""
@@ -115,14 +115,14 @@ class TaskListView(FlowViewPermissionMixin, generic.ListView):
             [<app_label>/<flow_label>/task_list.html,
              'viewflow/flow/task_list.html']
         """
-        if self.template_name is None:
-            opts = self.flow_class._meta
-
-            return (
-                '{}/{}/task_list.html'.format(opts.app_label, opts.flow_label),
-                'viewflow/flow/task_list.html')
-        else:
+        if self.template_name is not None:
             return [self.template_name]
+        opts = self.flow_class._meta
+
+        return (
+            f'{opts.app_label}/{opts.flow_label}/task_list.html',
+            'viewflow/flow/task_list.html',
+        )
 
     def get_queryset(self):
         """List of tasks assigned to the current user."""
@@ -148,21 +148,24 @@ class QueueListView(FlowViewPermissionMixin, generic.ListView):
             [<app_label>/<flow_label>/queue.html,
              'viewflow/flow/queue.html']
         """
-        if self.template_name is None:
-            opts = self.flow_class._meta
-
-            return (
-                '{}/{}/queue.html'.format(opts.app_label, opts.flow_label),
-                'viewflow/flow/queue.html')
-        else:
+        if self.template_name is not None:
             return [self.template_name]
+        opts = self.flow_class._meta
+
+        return (
+            f'{opts.app_label}/{opts.flow_label}/queue.html',
+            'viewflow/flow/queue.html',
+        )
 
     def get_queryset(self):
         """List of unassigned tasks available for current user."""
-        queryset = self.flow_class.task_class.objects.user_queue(self.request.user, flow_class=self.flow_class) \
-            .filter(status=activation.STATUS.NEW).order_by('-created')
-
-        return queryset
+        return (
+            self.flow_class.task_class.objects.user_queue(
+                self.request.user, flow_class=self.flow_class
+            )
+            .filter(status=activation.STATUS.NEW)
+            .order_by('-created')
+        )
 
 
 class ArchiveListView(FlowViewPermissionMixin, generic.ListView):
@@ -180,14 +183,14 @@ class ArchiveListView(FlowViewPermissionMixin, generic.ListView):
             [<app_label>/<flow_label>/archive.html,
              'viewflow/flow/archive.html']
         """
-        if self.template_name is None:
-            opts = self.flow_class._meta
-
-            return (
-                '{}/{}/archive.html'.format(opts.app_label, opts.flow_label),
-                'viewflow/flow/archive.html')
-        else:
+        if self.template_name is not None:
             return [self.template_name]
+        opts = self.flow_class._meta
+
+        return (
+            f'{opts.app_label}/{opts.flow_label}/archive.html',
+            'viewflow/flow/archive.html',
+        )
 
     def get_queryset(self):
         """List of task completed by the current user."""
